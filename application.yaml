@@ -1,0 +1,28 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: saif-tvm
+spec:
+  template:
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: wasm-runtime
+                    operator: In
+                    values:
+                      - tvm-20
+      runtimeClassName: wasmtime-tvm
+      timeoutSeconds: 30
+      containers:
+        - image: ghcr.io/khelifa/code/infer:v0.1.0
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          command:
+            - "/"
+          livenessProbe:
+            tcpSocket:
+              port: 80

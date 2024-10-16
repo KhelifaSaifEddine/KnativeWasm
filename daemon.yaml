@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tvm-installer-20
+spec:
+  selector:
+    matchLabels:
+      name: tvm-installer-20
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: tvm-installer-20
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+        wasm-runtime: tvm-20
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      hostPID: true
+      volumes:
+        - name: host-root
+          hostPath:
+            path: /
+      initContainers:
+        - name: installer
+          image: ghcr.io/khelifasaifeddine/wasmtimetvm-containerd-shim-installer:0.1.0
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          env:
+            - name: HOST_ROOT
+              value: /host
+          volumeMounts:
+            - name: host-root
+              mountPath: /host
+      containers:
+        - name: pause
+          image: k8s.gcr.io/pause:3.1
+          imagePullPolicy: IfNotPresent
